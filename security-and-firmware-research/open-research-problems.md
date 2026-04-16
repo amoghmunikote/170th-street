@@ -29,17 +29,27 @@ This page documents the active open problems in CMP 170HX security and firmware 
 * Analysis of the NVIDIA Linux open-source kernel module (partially released by NVIDIA in 2022) for any per-device instruction throttling logic
 * Testing whether the datacenter driver (used for A100) applied to the CMP 170HX produces different FMA behavior
 
-**Problem 3 — PCIe Gen 1 Lock — Runtime Override**
+**Problem 3 — PCIe Gen 1 Lock**
 
-**Impact if solved:** 4× improvement in PCIe bandwidth (after capacitor mod) or 64× if Gen 4 can be reached.
+**Impact if solved:** 4× improvement in PCIe bandwidth (after capacitor mod) or 64× if Gen 4 x16 can be reached.
 
-**Current state:** The lock is enforced in firmware during PCIe link training. No runtime override is known. The NVIDIA System Management Interface (nvidia-smi) does not expose PCIe speed as a configurable parameter.
+**Current state — runtime software unlock ruled out**
 
-**Research directions:**
+Every known software-only path from Linux userspace has been independently tested and eliminated. The full methodology and results are in [Runtime PCIe Speed Unlock — Attempted & Failed](runtime-pcie-unlock-attempt.md). Summary:
 
-* Direct PCIe register access via `/dev/mem` or similar to attempt speed renegotiation after boot
-* Analysis of the PCIe link training sequence in the VBIOS
-* Testing whether any version of the datacenter driver exposes PCIe speed configuration for the GA100
+* `setpci` write to LnkCap2 → silently rejected (hardware read-only)
+* MMIO BAR0 access to link registers at `0x88070`/`0x8808c`/`0x88090` → PROT-protected, reads return zero, writes ignored
+* Upstream root port retrain via `pcie_set_speed.sh` → no change, endpoint re-advertises Gen 1 in its TS1/TS2 ordered sets
+* VBIOS disassembly identified register `0x14118f78` as the PCIe link speed configuration register manipulated by Falcon devinit, but this address is in the Falcon internal PRIV bus space and is not in host BAR0 aperture
+* RAM patching between firmware signature validation and execution → closed by DMA-time verification on Ampere
+
+The protection is layered: multiple independent mechanisms each reject the attack, so defeating any single layer still leaves the others in place. This is stricter than consumer Ampere — GA100 ships with the full datacenter PROT configuration.
+
+**Remaining research directions:**
+
+* **PCIe retimer with TS modification** — a signal-conditioning chip physically on the PCIe lanes that rewrites the endpoint's TS1/TS2 Rate ID field before forwarding to the Root Complex. No firmware dependency. Candidate silicon: Astera Labs Aries, TI DS160PR810. Requires custom PCIe interposer PCB. Most actionable path that exists today.
+* **Ampere Falcon signing bypass** — solving this unlocks PCIe speed via firmware modification, but also unlocks everything else (see Problem 1).
+* **Comparative testing with a real A100** — anyone with access to both cards could dump and compare the Falcon devinit code to identify the single conditional branch or constant that decides between "advertise Gen 1" and "advertise Gen 4", which would inform targeted exploit development.
 
 **Problem 4 — Driver Compatibility with Newer Drivers**
 

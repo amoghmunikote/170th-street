@@ -38,6 +38,8 @@ No publicly known method exists to flash modified unsigned firmware onto an Ampe
 
 The PCIe speed lock is enforced in the signed VBIOS. Without a firmware modification, the card cannot negotiate above Gen 1 speed regardless of host slot capabilities.
 
+Every known software-only runtime path has been independently tested and eliminated — `setpci` write to LnkCap2 is rejected, MMIO BAR0 access to the link registers is PROT-protected on GA100, upstream root port retrains don't change what the endpoint advertises, and the Falcon PRIV register that manipulates the speed bits is not host-addressable. The full test methodology and results are documented in [Runtime PCIe Speed Unlock — Attempted & Failed](runtime-pcie-unlock-attempt.md).
+
 **FMA Throttle at Firmware Level — Not Bypassed**
 
 The FMA throttle persists in the firmware. The application-layer workaround routes around it but does not remove it. Any workload that cannot be modified to avoid FMA instructions (standard binaries, closed-source software) will still encounter throttled FP32 performance.

@@ -51,6 +51,7 @@
 
 * [The Falcon Security Architecture](security-and-firmware-research/the-falcon-security-architecture.md)
 * [What Has Been Bypassed — and What Hasn't](security-and-firmware-research/what-has-been-bypassed-and-what-hasnt.md)
+* [Runtime PCIe Speed Unlock — Attempted & Failed](security-and-firmware-research/runtime-pcie-unlock-attempt.md)
 * [Open Research Problems](security-and-firmware-research/open-research-problems.md)
 
 ## Sources
