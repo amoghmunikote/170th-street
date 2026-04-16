@@ -1,6 +1,8 @@
 # Table of contents
 
 * [Welcome!](README.md)
+* [Contributions](contributions.md)
+* [Credits](credits.md)
 
 ## Introduction
 
