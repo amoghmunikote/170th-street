@@ -40,4 +40,26 @@ The arXiv paper on the CMP 170HX (2505.03782) confirmed that LLM inference at FP
 
 **Tensor Core Status**
 
-The CMP 170HX has 280 third-generation Tensor Cores (4 per SM × 70 SMs). The gpu\_burn test using `CUBLAS_TENSOR_OP_MATH` achieved \~6.2 TFLOPS — the same as non-FMA FP32. This suggests the Tensor Cores are either non-functional or the FLOPS ceiling is still being enforced even on the Tensor Core path. The Tensor Core status requires further investigation and community testing to fully characterize.
+The CMP 170HX has 280 third-generation Tensor Cores (4 per SM × 70 SMs). For a long time the community observed \~6.2–6.3 TFLOPS via the cuBLAS Tensor Core path and could not explain why — the same ceiling as non-FMA FP32, suggesting the Tensor Cores were either non-functional or capped by the same mechanism as FMA.
+
+Microbenchmarking research by Xing Kangwei (Zenodo 19002983, March 2026) has now definitively answered this question with three findings:
+
+**Finding 1 — 256 fixed-cycle instruction throttle on MMA instructions**
+
+A single MMA (Matrix Multiply-Accumulate) instruction on the CMP 170HX executes with a fixed latency of 256 cycles. Critically, this latency cannot be hidden through pipeline overlap regardless of how much Instruction Level Parallelism (ILP) is present. On an unrestricted A100, MMA latency can be hidden by overlapping independent instructions in the pipeline. On the CMP 170HX, the 256-cycle stall is absolute — no amount of instruction scheduling helps.
+
+**Finding 2 — Only 4 warps per SM can issue Tensor Core instructions simultaneously**
+
+On the CMP 170HX, only 4 warps per Streaming Multiprocessor can simultaneously issue Tensor Core instructions. An unrestricted A100 allows far more concurrent warp issuance. This 4-warp limit combined with the 256-cycle fixed latency creates the observed throughput ceiling.
+
+**Finding 3 — The theoretical model closes perfectly**
+
+Working from the 256-cycle fixed latency and the 4-warp issue limit, the paper constructs a theoretical model that produces exactly the measured 6.3 TFLOPS — closing the loop from microarchitecture to observed benchmark result. The Tensor Core FP16 realistic computing power is **1/32 of its theoretical peak** as a direct result of these two constraints.
+
+**The throttle is dispatch-level hardware gating**
+
+Multiple controlled experiments — ILP scaling, warp scaling, dependency chain construction, and cross-pipeline interference — confirm the throttle is a **dispatch-level hardware gate**, not physical damage to execution units and not a decoding delay. The Tensor Core execution units are physically intact and functional. The gate simply prevents more than 4 warps from issuing MMA instructions per SM, and enforces the 256-cycle fixed latency regardless of pipeline state.
+
+This is a distinct mechanism from the FP32 FMA throttle. The two restrictions operate at different levels and through different mechanisms — both are present simultaneously on the CMP 170HX.
+
+**Practical implication:** The 6.3 TFLOPS Tensor Core ceiling is now understood to be a hardware-enforced dispatch gate rather than a firmware flag. This makes it significantly harder to bypass than the FMA throttle (which was bypassed at the compiler level by avoiding the instruction entirely). Bypassing the Tensor Core dispatch gate would require either firmware modification or a new hardware-level technique — both of which are unsolved.

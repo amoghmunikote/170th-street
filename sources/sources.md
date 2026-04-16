@@ -14,6 +14,10 @@ A comprehensive reference list of all sources, tools, papers, and community reso
 
 **Hackaday — "Hacking An NVIDIA CMP 170HX Crypto GPU For EM Sim Work"** Feature article covering niconiconi's work, published September 2024. Good entry point for newcomers. [https://hackaday.com/2024/09/11/hacking-an-nvidia-cmp-170hx-crypto-gpu-for-em-sim-work/](https://hackaday.com/2024/09/11/hacking-an-nvidia-cmp-170hx-crypto-gpu-for-em-sim-work/)
 
+**Xing Kangwei — "Microbenchmarking Instruction-Level Tensor Core Throttling in NVIDIA CMP 170HX" (Zenodo 19002983)** Definitive microbenchmarking study characterizing the Tensor Core throttle mechanism. Discovers the 256 fixed-cycle MMA latency and 4-warp-per-SM dispatch limit, constructing a theoretical model that explains the observed 6.3 TFLOPS ceiling. Confirms the throttle is dispatch-level hardware gating, not physical damage. Published March 2026. [https://zenodo.org/records/19002983](https://zenodo.org/records/19002983)
+
+**Xing Kangwei — "Instruction-Level Performance Analysis and Optimization Strategies for Constrained AI Accelerators: A Case Study of CMP 170HX" (Zenodo 18994970)** Proposes a systematic instruction-level framework for analyzing and bypassing restrictions on the CMP 170HX across three dimensions: instruction type, numerical precision, and execution unit. Introduces four operator-level circumvention strategies and validates them on Transformer inference, Stable Diffusion, and Diffusion Transformer workloads, achieving up to \~2× end-to-end improvement. Published March 2026. [https://zenodo.org/records/18994970](https://zenodo.org/records/18994970)
+
 ***
 
 **Community Research & Tools**

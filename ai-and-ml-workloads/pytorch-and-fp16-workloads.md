@@ -153,3 +153,86 @@ def run_inference_cmp170hx(model, inputs):
 
     return outputs
 ```
+
+**Advanced: Operator-Level Circumvention Strategies**
+
+Research by Xing Kangwei (Zenodo 18994970, March 2026) extends the FMA workaround concept into a systematic framework of four operator-level strategies for bypassing restricted instruction paths within the legal PyTorch programming model. These go beyond the simple `-fmad=false` compiler flag and enable optimization of workloads where the flag alone is insufficient.
+
+**Strategy 1 — Instruction Splitting**
+
+Break FMA operations into explicit separate multiply and add operations. This is the conceptual foundation of the `-fmad=false` flag, but applied at the operator level for cases where compiler flags do not reach (e.g. pre-compiled kernels, third-party libraries, closed-source operations).
+
+python
+
+```python
+# Instead of: result = a * b + c  (compiles to FMA)
+# Use explicit separation:
+mul_result = torch.mul(a, b)
+result = torch.add(mul_result, c)
+```
+
+For custom CUDA kernels:
+
+cuda
+
+```cuda
+// Instead of: result = fmaf(a, b, c);
+// Use:
+float mul = a * b;
+float result = mul + c;
+```
+
+**Strategy 2 — Intrinsic Instruction Substitution**
+
+Replace restricted instructions with equivalent unrestricted ones that produce the same mathematical result. For Tensor Core operations specifically, restructuring the GEMM (General Matrix Multiply) computation to use non-MMA instruction paths where possible can partially avoid the dispatch gate.
+
+**Strategy 3 — Algebraic Transformation**
+
+Restructure computations algebraically to change their instruction footprint without changing their mathematical result. This is particularly applicable to attention mechanisms and normalization layers where the computation order can be rearranged.
+
+Example: layer normalization can be restructured to reduce FMA dependency in the variance computation:
+
+python
+
+```python
+# Standard form — FMA heavy
+mean = x.mean(dim=-1, keepdim=True)
+var = ((x - mean) ** 2).mean(dim=-1, keepdim=True)
+
+# Restructured form — reduces FMA path
+# Uses the identity: Var(X) = E[X²] - E[X]²
+sq_mean = (x * x).mean(dim=-1, keepdim=True)
+mean = x.mean(dim=-1, keepdim=True)
+var = sq_mean - mean * mean
+```
+
+**Strategy 4 — Execution Unit Migration**
+
+Move compute to unthrottled execution units. On the CMP 170HX this means migrating work toward:
+
+* FP16 operations (unthrottled at \~42 TFLOPS)
+* INT32/INT8 operations (unthrottled at 12.5 TIOPS)
+* Non-FMA FP32 operations (unthrottled at 6.25 TFLOPS)
+
+In PyTorch this is achieved through aggressive use of `.half()`, `torch.autocast`, and quantization:
+
+python
+
+```python
+# Migrate as much compute as possible to FP16
+with torch.autocast(device_type='cuda', dtype=torch.float16):
+    # All supported operations run in FP16 here
+    output = model(input)
+```
+
+**Validated Results on Real Workloads**
+
+The paper validates these strategies on three workloads and reports up to approximately 2× end-to-end inference improvement on the CMP 170HX without significant numerical accuracy loss:
+
+| Workload                                    | Framework          | Improvement | Notes                                   |
+| ------------------------------------------- | ------------------ | ----------- | --------------------------------------- |
+| Transformer language model inference        | PyTorch custom ops | Up to \~2×  | Combined strategy application           |
+| Stable Diffusion image generation           | PyTorch custom ops | Confirmed   | First validation on image generation    |
+| Diffusion Transformer (DiT / Z-Image-Turbo) | PyTorch custom ops | Confirmed   | Extends to diffusion transformer models |
+
+The Stable Diffusion and DiT results are particularly significant — they are the first published evidence that the circumvention strategies work on image generation models, not just language models. Stable Diffusion is heavily Tensor Core and FMA dependent in its UNet and attention layers, making these results non-trivial.

@@ -55,15 +55,28 @@ This page documents the active open problems in CMP 170HX security and firmware 
 
 **Problem 5 — Tensor Core Full Activation**
 
-**Impact if solved:** Potential access to \~312 TFLOPS FP16 Tensor Core throughput (the A100's full figure) versus the current \~6.2 TFLOPS observed.
+**Impact if solved:** Access to full \~312 TFLOPS FP16 Tensor Core throughput versus the current hardware-gated 6.3 TFLOPS — a 49× improvement for Tensor Core workloads.
 
-**Current state:** gpu\_burn with Tensor Cores enabled achieves only \~6.2 TFLOPS — the same as non-FMA FP32 — suggesting either the Tensor Core path is throttled by the same mechanism as FMA, or the Tensor Cores are being disabled entirely. Whether this is a firmware-level restriction or a driver-level restriction is unknown.
+**Current state — now significantly better understood**
 
-**Research directions:**
+Microbenchmarking research (Zenodo 19002983, March 2026) has definitively characterized the Tensor Core throttle mechanism. Key findings:
 
-* Testing with different cuBLAS configurations and CUDA compute modes
-* Direct PTX assembly testing of Tensor Core instructions (WMMA operations) to see if the hardware executes them at all
-* Analysis of NVIDIA's Ampere whitepaper for Tensor Core architecture details that might indicate how throttling is implemented
+* A single MMA instruction executes with a **256 fixed-cycle latency** that cannot be hidden by ILP or pipeline overlap
+* Only **4 warps per SM** can simultaneously issue Tensor Core instructions
+* These two constraints together produce exactly the measured 6.3 TFLOPS — the theoretical model closes perfectly
+* The mechanism is **dispatch-level hardware gating** — confirmed by ILP scaling, warp scaling, dependency chain, and cross-pipeline interference experiments
+* The Tensor Core execution units are physically intact — it is the dispatch gate that limits throughput, not damaged or disabled hardware
+
+**Why this is harder to bypass than the FMA throttle**
+
+The FMA throttle was bypassed at the compiler level — by preventing FMA instructions from being generated, the throttled instruction path is simply never invoked. The Tensor Core dispatch gate operates differently: the execution units are present, the instructions are accepted, but the hardware gate limits how many warps can issue them and enforces a fixed latency regardless of pipeline state. There is no compiler-level equivalent of `-fmad=false` for a dispatch-level gate. Bypassing it likely requires either firmware modification (to remove the gate) or a microarchitectural technique that has not yet been identified.
+
+**Research directions**
+
+* Analysis of whether the dispatch gate is enforced in Falcon microcode loaded at boot, in the VBIOS power table, or in a hardwired GPU register — the paper identifies it as hardware gating but the exact enforcement point in the boot chain is not established
+* Testing whether any version of the A100 datacenter driver changes the warp issue limit or MMA latency on the CMP 170HX
+* PTX-level experiments testing alternative Tensor Core instruction forms (WMMA vs MMA vs warp-level primitives) to see if any path avoids the gate
+* Cross-referencing with the Ampere Falcon bypass problem — if custom firmware can be loaded, the dispatch gate configuration may be modifiable
 
 **Contributing to Research**
 

@@ -99,16 +99,17 @@ enqueueReadBuffer non-blocking  : 0.83 GB/s
 
 Approximately **0.85 GB/s** — the combined result of the firmware Gen 1 lock and the PCB x4 width restriction. For comparison, full PCIe 4.0 x16 delivers \~64 GB/s.
 
-**gpu\_burn — Mixed Precision Tensor Core**
+**gpu\_burn — Tensor Core (Dispatch-Gated)**
 
 ```
 GPU 0: NVIDIA Graphics Device
-Initialized device 0 with 7961 MB of memory
 Using FLOATS, using Tensor Cores
-10.0%  proc'd: 24504 (6236 Gflop/s)
+proc'd: 24504 (6236 Gflop/s)
 ```
 
-\~**6.2 TFLOPS** via cuBLAS Tensor Core path — same as non-FMA FP32, confirming Tensor Cores are present but not delivering additional throughput above the non-FMA ceiling.
+\~**6.2–6.3 TFLOPS** via cuBLAS Tensor Core path.
+
+This figure is now fully explained by microbenchmarking research (Zenodo 19002983). The ceiling is not caused by the same mechanism as FMA throttling but by a **dispatch-level hardware gate** with two components: a **256 fixed-cycle MMA instruction latency** that cannot be hidden by pipeline overlap, and a limit of **4 warps per SM** that can simultaneously issue Tensor Core instructions. These two constraints together produce exactly 6.3 TFLOPS — 1/32 of the theoretical FP16 Tensor Core peak. The Tensor Core execution units are physically intact; only the dispatch gate limits throughput.
 
 **Hashcat — MD5 (Integer Workload)**
 

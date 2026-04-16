@@ -8,7 +8,7 @@
 
 **Dr. Moritz Lehmann** Author of FluidX3D. Provided the hint that led to the FMA modification in FluidX3D, enabling 7,684 MLUPs/s — 90% of a real A100 — on the CMP 170HX. [https://github.com/ProjectPhysX/FluidX3D](https://github.com/ProjectPhysX/FluidX3D)
 
-**Xing Kangwei** Author of arXiv 2505.03782, the first peer-reviewed academic paper validating the FMA workaround and documenting LLM inference results on the CMP 170HX. [https://arxiv.org/abs/2505.03782](https://arxiv.org/abs/2505.03782)
+**Xing Kangwei** Author of three research papers on the CMP 170HX. arXiv 2505.03782 validated the FMA workaround and documented LLM inference results. Zenodo 19002983 definitively characterized the Tensor Core throttle mechanism through microbenchmarking, discovering the 256-cycle MMA latency and 4-warp dispatch limit. Zenodo 18994970 proposed a systematic instruction-level circumvention framework validated on Transformer inference, Stable Diffusion, and Diffusion Transformer workloads. [https://arxiv.org/abs/2505.03782](https://arxiv.org/abs/2505.03782) [https://zenodo.org/records/19002983](https://zenodo.org/records/19002983) [https://zenodo.org/records/18994970](https://zenodo.org/records/18994970)
 
 **dartraiden** Maintainer of NVIDIA-patcher, which enables 3D acceleration on the CMP 170HX and hosts the community issue tracker where much of the collaborative research has taken place. [https://github.com/dartraiden/NVIDIA-patcher](https://github.com/dartraiden/NVIDIA-patcher)
 

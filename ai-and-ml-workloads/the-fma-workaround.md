@@ -87,3 +87,23 @@ The workaround is most impactful for memory-bound workloads between 0.29 and 4.6
 | PyTorch custom kernels | `-fmad=false` in CUDA compilation                | No              |
 | PoCL (any OpenCL app)  | Build PoCL with `-DENABLE_FMA=OFF`               | No              |
 | Standard PyTorch ops   | No workaround — FP16 is preferred path           | N/A             |
+
+**Beyond the Basic Workaround — Instruction-Level Framework**
+
+The `-fmad=false` flag and OpenCL pragma are the simplest form of the FMA workaround, but they only address the FP32 FMA throttle and only where the compiler generates FMA instructions. Research by Xing Kangwei (Zenodo 18994970, March 2026) proposes a broader instruction-level framework that extends the concept to three dimensions:
+
+**Three dimensions of restriction on the CMP 170HX:**
+
+| Dimension           | Restriction                                                | Workaround                                                    |
+| ------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
+| Instruction type    | FP32 FMA throttled                                         | Avoid FMA generation (-fmad=false, pragma)                    |
+| Numerical precision | FP64 throttled at all paths                                | Avoid FP64 entirely — use FP32 or FP16                        |
+| Execution unit      | Tensor Core dispatch gated (4 warps/SM, 256-cycle latency) | Restructure to avoid MMA instructions or migrate to FP16 path |
+
+The framework introduces three analytical tools for characterizing restricted GPUs:
+
+* **Instruction throughput and SM normalization model** — normalizes observed throughput per SM to identify per-instruction restriction ratios
+* **Effective precision execution factor** — quantifies actual execution efficiency under different instruction and precision combinations
+* **Instruction-level energy density metric** — measures useful compute per watt under different instruction paths, accounting for the fact that throttled workloads consume far less power than unthrottled ones
+
+For practical use, see the Operator-Level Circumvention Strategies section on the PyTorch & FP16 Workloads page.
