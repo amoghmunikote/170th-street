@@ -1,12 +1,23 @@
-# 170th Street Docs
+---
+cover: .gitbook/assets/New Project.png
+coverY: 0
+---
 
-> *Unlocking the A100 NVIDIA didn't want you to have*
+# Welcome!
 
-Community documentation for the **NVIDIA CMP 170HX** — a GA100-based cryptocurrency 
-mining GPU sold off after Ethereum's transition to Proof-of-Stake. This card shares its 
-PCB with the NVIDIA A100 40GB PCIe and contains the same GA100-105F-A1 die, 1,493 GB/s 
-HBM2e memory bandwidth, and 4,480 CUDA cores — deliberately restricted by NVIDIA for 
-mining use and now available on the secondhand market for $200–400.
+Welcome to 170th Street — the most comprehensive community resource for the NVIDIA CMP 170HX, a misunderstood piece of hardware that deserves a second life.
 
-This documentation covers everything needed to buy, set up, understand, modify, and 
-push the limits of this hardware.
+The CMP 170HX is built on the same GA100 silicon as NVIDIA's $10,000 A100 datacenter GPU. Sold in 2021 as a dedicated Ethereum mining card, it was deliberately crippled by NVIDIA to prevent general compute use — but the underlying hardware is extraordinary. With 1,493 GB/s of HBM2e memory bandwidth that beats even the RTX 4090, 42 TFLOPS of FP16 compute, and a PCB nearly identical to the A100, this card has enormous untapped potential.
+
+This documentation covers everything we know about unlocking that potential:
+
+* **Hardware** — full teardown, PCB analysis, comparison to the A100, and what NVIDIA removed and why
+* **Software Setup** — driver installation, power configuration, and clock tuning on Linux
+* **Performance** — honest benchmarks, what the FMA throttle actually costs you, and what workloads still shine
+* **Modifications** — VBIOS flashing, PCIe capacitor mod, watercooling installation, and NVLink research
+* **AI & ML** — LLM inference, FP16 workloads, the FMA workaround, and real-world usability
+* **Security Research** — firmware signing, the path toward unlocking FMA, and tools for investigation
+
+This is a living document. The goal is to turn a piece of discarded mining hardware into a viable budget compute platform — and eventually, to fully unlock the GA100 silicon inside.
+
+This project is community-driven and everyone is welcome to contribute. Whether you've done your own benchmarks, discovered a new workaround, successfully performed a hardware mod, or are researching the firmware — your findings belong here. Open a pull request, submit a change request, or reach out directly. No contribution is too small. The more people working on this, the faster we unlock everything this card can do.
