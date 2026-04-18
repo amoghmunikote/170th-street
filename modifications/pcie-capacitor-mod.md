@@ -22,6 +22,8 @@ Current PCIe bandwidth (unmodified): \~0.85 GB/s After this mod: \~4 GB/s Full P
 
 4 GB/s is still far below full PCIe bandwidth but is meaningful for workloads that do CPU-GPU data transfers, multi-GPU setups using PCIe, and any application where the current 0.85 GB/s is a bottleneck.
 
+<figure><img src="../.gitbook/assets/before.png" alt=""><figcaption></figcaption></figure>
+
 **Skill Requirements**
 
 This modification requires:
@@ -79,6 +81,8 @@ The link width upgraded from x4 to x16 as expected. Speed remains at 2.5GT/s (Ge
 **Status: ✅ CONFIRMED on CMP 170HX**
 
 <figure><img src="../.gitbook/assets/PXL_20260417_191817171.jpg" alt=""><figcaption></figcaption></figure>
+
+<figure><img src="../.gitbook/assets/after.png" alt=""><figcaption></figcaption></figure>
 
 **Next Steps After This Mod**
 
