@@ -14,7 +14,7 @@ As documented in the PCB Analysis page, PCIe bandwidth is restricted in two inde
 
 This mod addresses Layer 2 only. The result will be **PCIe Gen 1 x16 (\~4 GB/s)** instead of **PCIe Gen 1 x4 (\~1 GB/s)** — a 4× improvement in PCIe bandwidth.
 
-<figure><img src="../.gitbook/assets/capacitors.jpg" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/before (1).png" alt=""><figcaption></figcaption></figure>
 
 **Why This Matters**
 
@@ -80,7 +80,7 @@ The link width upgraded from x4 to x16 as expected. Speed remains at 2.5GT/s (Ge
 
 **Status: ✅ CONFIRMED on CMP 170HX**
 
-<figure><img src="../.gitbook/assets/PXL_20260417_191817171.jpg" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/after (1).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../.gitbook/assets/after.png" alt=""><figcaption></figcaption></figure>
 
