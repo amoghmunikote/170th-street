@@ -33,9 +33,11 @@ This page documents the active open problems in CMP 170HX security and firmware 
 
 **Impact if solved:** 4× improvement in PCIe bandwidth (after capacitor mod) or 64× if Gen 4 x16 can be reached.
 
-**Current state — runtime software unlock ruled out**
+**Layer 2 (PCB capacitor omission) — SOLVED** Confirmed April 2026 by Amogh Munikote. Populating the 24 missing 0402 0.22µF AC coupling capacitors on the PCIe lanes upgrades the link from x4 to x16 width. Full details and verified results on the PCIe Capacitor Mod page.
 
-Every known software-only path from Linux userspace has been independently tested and eliminated. The full methodology and results are in [Runtime PCIe Speed Unlock — Attempted & Failed](runtime-pcie-unlock-attempt.md). Summary:
+**Layer 1 (firmware Gen 1 speed lock) — Open**
+
+Every known software-only path from Linux userspace has been independently tested and eliminated. The full methodology and results are in Runtime PCIe Speed Unlock — Attempted & Failed. Summary:
 
 * `setpci` write to LnkCap2 → silently rejected (hardware read-only)
 * MMIO BAR0 access to link registers at `0x88070`/`0x8808c`/`0x88090` → PROT-protected, reads return zero, writes ignored
@@ -47,9 +49,9 @@ The protection is layered: multiple independent mechanisms each reject the attac
 
 **Remaining research directions:**
 
-* **PCIe retimer with TS modification** — a signal-conditioning chip physically on the PCIe lanes that rewrites the endpoint's TS1/TS2 Rate ID field before forwarding to the Root Complex. No firmware dependency. Candidate silicon: Astera Labs Aries, TI DS160PR810. Requires custom PCIe interposer PCB. Most actionable path that exists today.
-* **Ampere Falcon signing bypass** — solving this unlocks PCIe speed via firmware modification, but also unlocks everything else (see Problem 1).
-* **Comparative testing with a real A100** — anyone with access to both cards could dump and compare the Falcon devinit code to identify the single conditional branch or constant that decides between "advertise Gen 1" and "advertise Gen 4", which would inform targeted exploit development.
+* PCIe retimer with TS modification — a signal-conditioning chip physically on the PCIe lanes that rewrites the endpoint's TS1/TS2 Rate ID field before forwarding to the Root Complex. No firmware dependency. Candidate silicon: Astera Labs Aries, TI DS160PR810. Requires custom PCIe interposer PCB. Most actionable path that exists today.
+* Ampere Falcon signing bypass — solving this unlocks PCIe speed via firmware modification, but also unlocks everything else (see Problem 1).
+* Comparative testing with a real A100 — anyone with access to both cards could dump and compare the Falcon devinit code to identify the single conditional branch or constant that decides between "advertise Gen 1" and "advertise Gen 4", which would inform targeted exploit development.
 
 **Problem 4 — Driver Compatibility with Newer Drivers**
 

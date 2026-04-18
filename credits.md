@@ -1,6 +1,6 @@
 # Credits
 
-**Amogh Munikote** Creator and maintainer of 170th Street Docs. Responsible for building, organizing, and maintaining this documentation project. [https://github.com/amoghmunikote](https://github.com/amoghmunikote)
+**Amogh Munikote** Creator and maintainer of 170th Street Docs. Responsible for building, organizing, and maintaining this documentation project. First person to publicly confirm the PCIe capacitor mod works on the CMP 170HX (April 2026), upgrading the link from x4 to x16 width. [https://github.com/amoghmunikote](https://github.com/amoghmunikote)
 
 **niconiconi** Author of the foundational CMP 170HX research article covering performance benchmarking, FMA throttle discovery, PCB analysis, teardown, watercooling installation, power tree analysis, and repair documentation. [https://niconiconi.neocities.org/tech-notes/nvidia-cmp-170hx-review/](https://niconiconi.neocities.org/tech-notes/nvidia-cmp-170hx-review/)
 
