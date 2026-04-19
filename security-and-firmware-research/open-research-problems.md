@@ -12,16 +12,18 @@ This page documents the active open problems in CMP 170HX security and firmware 
 
 **Research directions:**
 
+* **GA100 V2 descriptor analysis (most actionable):** GA100 uses FalconUCodeDescV2, not V3 (see [The Falcon Security Architecture](the-falcon-security-architecture.md)). V2 has received far less public scrutiny than V3 and places the CMP 170HX closer to Turing's signing infrastructure — the generation that OMGVflash ultimately exploited. Dumping the Type 0xE0 FwSec partition from a 170HX ROM and diffing byte-for-byte against a signed A100 40GB PCIe ROM (identical PCB, different fuse state) using `envydis`/`ghidra_falcon` may reveal whether fuse enforcement lives in patchable firmware or in the SM hardware datapath.
 * Analysis of Falcon microcode for Ampere — NVIDIA has published some Falcon documentation but key implementation details are proprietary
 * Side-channel analysis of the signature verification process
 * Review of NVIDIA security bulletins for Ampere firmware vulnerabilities (CVE database)
 * Hardware-level analysis (requires decapsulation of the GPU package — extreme difficulty)
+* **Comparative trace against A100:** Anyone with access to both a CMP 170HX and a real A100 can dump and compare Falcon devinit code to identify the single conditional branch or constant that decides between "advertise Gen 1" and "advertise Gen 4" — which would directly inform targeted exploit development. The register `0x14118f78` identified in [Runtime PCIe Speed Unlock — Attempted & Failed](runtime-pcie-unlock-attempt.md) is the likely target; comparing the mask values at that address between a 170HX trace and an A100 trace would localize the enforcement.
 
 **Problem 2 — FMA Throttle Mechanism Identification**
 
 **Impact if solved:** Better understanding of exactly where and how the throttle is enforced, potentially revealing alternative bypass paths.
 
-**Current state:** The throttle is known to be driver or firmware enforced (not silicon fuse), confirmed by the fact that non-FMA FP32 runs at full speed. Whether it is enforced in the VBIOS, in the NVIDIA kernel driver, or in Falcon microcode that runs at boot time is not definitively established.
+**Current state:** The throttle is widely believed to be OTP fuse-enforced at the silicon level rather than firmware-enforced. niconiconi's fuse analysis notes: *"The strategy was to use fuses to limit the crucial instructions, particularly the FP32 FMA and MAD instructions... Unless of course the fuses aren't really fuses at all and can be reprogrammed with some stolen software. For some chips I worked on there were OTP ROM IPs which were blown at production test. No way to undo that."* The FP32 MAD/FMA throttle ratio is exactly 16:1 (0.395 TFLOPS with FMA vs. 6.285 TFLOPS without), first quantified in December 2023 by jetcat8848 (dartraiden/NVIDIA-patcher Issue #73). Whether enforcement is at the fuse-gated SM datapath or in early boot firmware that configures an SM register is not definitively established — the application-layer workaround routes around the throttled instruction entirely, so the question has been deprioritized.
 
 **Research directions:**
 

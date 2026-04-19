@@ -22,11 +22,21 @@ This is a driver-level modification, not a firmware modification. It does not to
 
 The patcher supports the CMP 170HX explicitly and is maintained through regular driver version updates. Note: newer driver versions (576.80+) have shown issues with the CMP 170HX — driver version 471.50 (Windows) and the equivalent Linux datacenter driver are the most stable as of mid-2025.
 
-**Cross-Flashing Between Signed VBIOSes**
+**Cross-Flashing Between Signed VBIOSes — How the Tools Actually Work**
 
-OMGVflash and NVflashk enable flashing of any signed, valid NVIDIA VBIOS onto any compatible card, bypassing the subsystem ID checks that standard nvflash enforces. This means you can flash a different official NVIDIA-signed VBIOS (with a different power table, clock table, etc.) onto the CMP 170HX as long as the device IDs match. This is how we flashed `92.00.6D.00.0A` onto our card in place of the original `92.00.67.00.01`.
+OMGVflash and NVflashk enable flashing of any signed, valid NVIDIA VBIOS onto any compatible card, bypassing the subsystem ID checks that standard nvflash enforces. This is how we flashed `92.00.6D.00.0A` onto our card in place of the original `92.00.67.00.01`.
 
-What it cannot do: flash a modified, unsigned, or custom-authored VBIOS. The firmware must still pass Falcon's signature validation to boot.
+Both tools are modified builds of NVIDIA's stock `nvflash.exe` (v5.780 base for OMGVflash, up to v5.814.0.k1 for nvflashk). Kefinator's nvflashk README describes the mechanism directly: *"I managed to locate a backdoor of sorts that nVidia implemented to have a 'mismatch bypass', and I have forced that bypass to be enabled at all times when using the -6 parameter."* The `-6` flag has existed in nvflash for years as a PCI Subsystem ID mismatch override; the patched builds simultaneously force bypass paths for:
+
+* PCI Subsystem ID mismatch (the original `-6` behavior)
+* Board ID mismatch (the fused PCB+GPU ID that stock nvflash refuses to override from the command line)
+* Hierarchy ID mismatch
+* InfoROM and XUSB-FW downgrade locks
+* Golden-card VendorCert/XOC/MasterCert checks
+
+OMGVflash goes slightly further by sending MUTEX commands directly to Falcon via `powrprof.dll` wake-up, allowing InfoROM/XUSB FW downgrades even when newer VBIOSes have locked parts of the EEPROM. The canonical invocation for a CMP 170HX is `omgvflash --protectoff -6 filename.rom`.
+
+**What these tools cannot do:** flash a modified, unsigned, or custom-authored VBIOS. The bypass exists entirely in host-side validation in `nvflash.exe`; the Falcon HS bootrom still validates the firmware cryptographically at next POST and rejects any tampered ROM. Both authors document this limit explicitly in their repos. Veii's roadmap: *"3000/4000 will require signed bioses... Later we can start and focus on Ampere and Ada"* — that "later" has not arrived.
 
 **What Has Not Been Bypassed**
 

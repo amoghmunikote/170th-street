@@ -32,6 +32,14 @@ A comprehensive reference list of all sources, tools, papers, and community reso
 
 **NVflashk (GitHub — notfromstatefarm)** Modified nvflash with permanent mismatch bypass. Used for cross-flashing signed VBIOSes between compatible NVIDIA cards. [https://github.com/notfromstatefarm/nvflashk](https://github.com/notfromstatefarm/nvflashk)
 
+**CAmadeus/falcon-tools (GitHub)** Falcon microcode analysis toolkit based on envydis. Used for disassembling Falcon ucode blobs extracted from VBIOS ROM images, including the DEVINIT scripts and the register `0x14118f78` bit-manipulation sequences documented in the PCIe unlock attempt. [https://github.com/CAmadeus/falcon-tools](https://github.com/CAmadeus/falcon-tools)
+
+**hexkyz — Falcon Security Research Blog** Deep-dive reverse engineering work on NVIDIA Falcon security for Maxwell and Pascal generations. Covers the AES-CMAC key-derivation weakness in Falcon v5 that was exploited in the Thog/vbe0201 "requiem" fake-signing tools — the same class of vulnerability that NVIDIA fixed in Falcon v6+, which Ampere uses. Contextualizes why Maxwell-era Falcon attacks do not transfer to Ampere. [https://hexkyz.blogspot.com/2021/11/](https://hexkyz.blogspot.com/2021/11/)
+
+**Overclock.net — NVflashk Thread (notfromstatefarm)** Primary community discussion thread for nvflashk development. Pages 7 and 10 contain Kefinator's explanation of the "backdoor" bypass mechanism, the complete list of checks the `-6` flag overrides, and the test matrix documenting which cross-generation flash attempts fail at POST vs. boot. [https://www.overclock.net/threads/nvflashk-flash-any-bios-to-nvidia-gpus-safe-board-id-bypass-up-to-4xxx-series-including-founders-edition-cards.1807438/](https://www.overclock.net/threads/nvflashk-flash-any-bios-to-nvidia-gpus-safe-board-id-bypass-up-to-4xxx-series-including-founders-edition-cards.1807438/)
+
+**Overclock.net — "NVIDIA Security Chip Cracked" Thread** Community discussion of Ampere VBIOS security following the OMGVflash release. Contains Veii's direct statements on Ampere certificate chain validation, the "pretty pretty impossible" assessment of going around it without Falcon reprogramming, and Igor's Lab corroboration that gupsterg and Veii "ultimately had to conclude that penetrating the current security mechanisms is very difficult." [https://www.overclock.net/threads/nvidia-security-chip-on-modern-nvidia-video-cards-cracked-modified-and-custom-bioses-allowed-soon.1807471/](https://www.overclock.net/threads/nvidia-security-chip-on-modern-nvidia-video-cards-cracked-modified-and-custom-bioses-allowed-soon.1807471/)
+
 ***
 
 **Hardware Documentation**
@@ -47,6 +55,16 @@ A comprehensive reference list of all sources, tools, papers, and community reso
 **NVIDIA open-gpu-doc (GitHub)** NVIDIA's partial hardware documentation release. Contains register specifications and architectural details useful for driver and firmware research. [https://github.com/NVIDIA/open-gpu-doc](https://github.com/NVIDIA/open-gpu-doc)
 
 **NVIDIA Open-Source Kernel Modules (GitHub)** Partially open-sourced NVIDIA Linux kernel driver, released 2022. Useful for analysis of driver-level behavior including any per-device restrictions. [https://github.com/NVIDIA/open-gpu-kernel-modules](https://github.com/NVIDIA/open-gpu-kernel-modules)
+
+**Linux nova-core — Falcon Architecture Documentation** Kernel documentation for the nova-core driver's Falcon implementation. Covers NS/LS/HS mode transitions, the HS bootrom authentication flow, and DMA-time signature validation on Ampere. Authoritative source for the "verified during DMA transfer, not after" behavior that closes the RAM-patching TOCTOU window. [https://docs.kernel.org/gpu/nova/core/falcon.html](https://docs.kernel.org/gpu/nova/core/falcon.html)
+
+**Linux nova-core — FWSEC Documentation** Kernel documentation for FWSEC (Firmware Security) subsystem. Describes WPR2 creation, FRTS/SB command interface exposed via FalconAppifHdrV1, and the authenticated copy of VBIOS sections into the write-protected region. [https://docs.kernel.org/gpu/nova/core/fwsec.html](https://docs.kernel.org/gpu/nova/core/fwsec.html)
+
+**Linux nova-core — VBIOS Documentation** Kernel documentation covering the VBIOS ROM layout: Type 0x00 PciAt, Type 0x03 EFI GOP, and Type 0xE0 FwSec partitions. Describes the BIT (BIOS Info Table) structure and token 0x70 (BIT\_TOKEN\_ID\_FALCON\_DATA). [https://docs.kernel.org/gpu/nova/core/vbios.html](https://docs.kernel.org/gpu/nova/core/vbios.html)
+
+**Timur Tabi — FalconUCodeDescV2 Support Patch Series (Linux nouveau mailing list)** Patch series from late 2025/early 2026 that revealed GA100 and Turing use FalconUCodeDescV2 rather than V3. V2 returns zero for pkc\_data\_offset, engine\_id\_mask, ucode\_id, signature\_count, and signature\_versions, and uses a split imem\_sec\_base/imem\_sec\_size layout. The nova-core comment "Only used on Turing and GA100, so return None for now" originates here. Critical for understanding why the CMP 170HX's signing infrastructure differs from consumer Ampere. Entry point: [https://www.mail-archive.com/nouveau@lists.freedesktop.org/msg46482.html](https://www.mail-archive.com/nouveau@lists.freedesktop.org/msg46482.html)
+
+**Joel Fernandes — nova-core GSP/SEC2 Patch (patchew.org)** Patch to the nova-core driver adding GSP and SEC2 Falcon support, part of the broader series documenting the Ampere boot chain (Booter → GSP-RM → FWSEC → DEVINIT → SEC2-RTOS). [https://patchew.org/linux/20250503040802.1411285-1-joelagnelf@nvidia.com/20250503040802.1411285-7-joelagnelf@nvidia.com/](https://patchew.org/linux/20250503040802.1411285-1-joelagnelf@nvidia.com/20250503040802.1411285-7-joelagnelf@nvidia.com/)
 
 ***
 
@@ -111,6 +129,10 @@ All hardware photos unless otherwise noted are sourced from niconiconi's article
 ***
 
 **Further Reading**
+
+**Tom's Hardware — "New NVIDIA BIOS Modding Tools"** News coverage of OMGVflash and NVflashk, with technical commentary on what the bypass achieves vs. what remains blocked. Good secondary source for cross-flash tool capabilities and community reaction. [https://www.tomshardware.com/news/new-nvidia-bios-modding-tools](https://www.tomshardware.com/news/new-nvidia-bios-modding-tools)
+
+**VideoCardz — "NVIDIA GPU BIOS Flashing Tools Can Now Flash Any BIOS to Any GPU"** News coverage of the nvflashk/OMGVflash release cycle. Useful contemporaneous record of what the community understood was achieved. [https://videocardz.com/newz/nvidia-gpu-bios-flashing-tools-can-now-flash-any-bios-to-any-gpu-bypassing-restrictions](https://videocardz.com/newz/nvidia-gpu-bios-flashing-tools-can-now-flash-any-bios-to-any-gpu-bypassing-restrictions)
 
 **repair.wiki — NVIDIA Pascal GPU Diagnosing Guide** General GPU repair methodology. The diagnostic approach applies broadly beyond Pascal. [https://repair.wiki/w/Nvidia\_Pascal\_GPU\_Diagnosing\_Guide](https://repair.wiki/w/Nvidia_Pascal_GPU_Diagnosing_Guide)
 

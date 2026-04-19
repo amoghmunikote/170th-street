@@ -22,6 +22,28 @@ When a GPU boots, the Falcon processor loads the VBIOS from the EEPROM chip. Bef
 
 This means: **any modification to the VBIOS, even a single byte change, invalidates the signature and renders the modified firmware unbootable.** Flashing a modified VBIOS via SPI programmer would still result in a non-booting card on Ampere.
 
+**The Signing Primitive**
+
+The signature scheme is **SHA-256 + PKCS#1 v2.1 RSA-3072**, as confirmed by NVIDIA's Falcon security documentation and the Open-IOV wiki. FalconUCodeDescV3 (used on consumer Ampere/GA102) stores 384-byte RSA signatures inline at offset `imem_load_size + pkc_data_offset`. Multiple signatures are stored per blob and selected at runtime by a `reg_fuse_version` silicon register matched against the descriptor's `signature_versions` bitmask — meaning a single firmware blob can carry valid signatures for several production fuse configurations simultaneously.
+
+**The Ampere Boot Chain**
+
+The full initialization sequence on Ampere runs in this order: **BROM → Booter (HS on SEC2) → GSP-RM (LS) → FWSEC (HS on GSP) → DEVINIT (LS on PMU) → SEC2-RTOS (LS)**. FWSEC creates a Write-Protected Region (WPR2) in VRAM and copies authenticated sections of the VBIOS into it after verifying them. Any component that is unsigned or that has been modified at any point in this chain causes Falcon to halt. The `Falcon In HALT or STOP state` error seen when attempting modified flashes on Ampere is the surface-level symptom of this halt.
+
+**GA100 Uses V2 Descriptors — A Key Research Distinction**
+
+A late-2025/early-2026 Linux nouveau patch series by Timur Tabi revealed that **GA100 (and Turing) use FalconUCodeDescV2, not V3**. V2 returns zero for `pkc_data_offset`, `engine_id_mask`, `ucode_id`, `signature_count`, and `signature_versions`, and uses a split `imem_sec_base`/`imem_sec_size` layout for NS vs. secure IMEM. The Linux nova-core driver comment reads: *"Only used on Turing and GA100, so return None for now."* V2 descriptors have received far less public scrutiny than V3. The CMP 170HX's GA100 die places it closer to Turing's signing infrastructure than to consumer Ampere — this matters because the Turing-generation signature implementation was the one ultimately exploited to produce OMGVflash.
+
+**VBIOS ROM Structure — What Is and Isn't Signed**
+
+A VBIOS ROM is a concatenated sequence of PCI-spec images:
+
+* **Type 0x00 (PciAt):** The main ROM image. Contains the `0xAA55` header, PCIR signature, NPDE, and the BIT (BIOS Info Table) with token `0x70` (BIT\_TOKEN\_ID\_FALCON\_DATA) pointing to the PMU Lookup Table. The PciAt header metadata — including PCI subsystem vendor and device IDs — is **not** covered by Falcon signatures.
+* **Type 0x03 (EFI/UEFI GOP):** The UEFI driver image for display output.
+* **Type 0xE0 (FwSec) × 2:** Contains all signed microcode blobs: FWSEC, DEVINIT, Booter, GSP-RM, SEC2-RTOS, and PMU ucode. The FWSEC DMEM includes a `FalconAppifHdrV1` header with entries exposing `FRTS` and `SB` (Secure Boot) commands used by the driver.
+
+Everything inside the Type 0xE0 partitions is authenticated. Any byte-level modification to any ucode blob, any DEVINIT script, or any thermal/voltage table referenced by WPR2 causes Falcon to halt. The PciAt header is not signature-protected — which is precisely why cross-flash tools can rebrand between signed VBIOSes (rewriting subsystem IDs) but cannot flash modified firmware.
+
 **The Ampere Security Level**
 
 NVIDIA has progressively strengthened Falcon security across GPU generations:
